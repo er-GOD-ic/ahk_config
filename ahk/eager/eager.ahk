@@ -144,7 +144,7 @@ F13 & k::{
     reset_tryed_vals()
     if (IME_GetConverting() && !tryed_hiragana && !tryed_katakana) {
         Send "{F7}"
-	tryed_katakana := true
+	tryed_katakana := true 
     } else {
         Send GetKeyState("Shift","P") ? "+{Up}"    : "{Up}"
     }
@@ -170,6 +170,11 @@ F13 & a::{
 F13 & e::{
     reset_tryed_vals()
     Send GetKeyState("Shift","P") ? "+{End}" : "{End}"
+}
+
+F13::{
+    if KeyWait("F13", "T0.1")
+        Send "{Esc}"
 }
 
 ~Enter::reset_tryed_vals()
@@ -252,6 +257,17 @@ F13 & e::{
 
 ; Razer Synapse 等対策
 A_MaxHotkeysPerInterval := 350
+
+; ============================================
+; Win + v で全画面
+; ============================================
+
+#v::
+{
+    hwnd := WinExist("A")  ; アクティブウィンドウ
+    if hwnd
+        WinMaximize hwnd
+}
 
 ; ------------------------------
 ; 無変換 → IME OFF
