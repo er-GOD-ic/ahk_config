@@ -2,15 +2,12 @@
 
 #Include .\IMEv2.ahk
 
-SetWorkingDir A_ScriptDir
-
 ; ============================================
 ; 基本設定
 ; ============================================
 
-; CapsLock → F13 にしている前提
-; CapsLock::F13
-; SetCapsLockState "AlwaysOff"
+SetWorkingDir A_ScriptDir
+SetCapsLockState "AlwaysOff"
 
 ; ============================================
 ; VirtualDesktopAccessor.dll 初期化
@@ -158,7 +155,7 @@ F13 & `;::{
     reset_tryed_vals()
     Send "{BackSpace}"
 }
-F13 & '::{
+F13 & sc028::{
     reset_tryed_vals()
     Send "{Delete}"
 }
@@ -171,10 +168,11 @@ F13 & e::{
     reset_tryed_vals()
     Send GetKeyState("Shift","P") ? "+{End}" : "{End}"
 }
-
 F13::{
-    if KeyWait("F13", "T0.1")
+    reset_tryed_vals()
+    if KeyWait("F13", "T0.1") {
         Send "{Esc}"
+    }
 }
 
 ~Enter::reset_tryed_vals()
@@ -189,7 +187,7 @@ F13::{
 
 #Space::{
     ; PowerShell をユーザー HOME で起動
-    Run "powershell", EnvGet("USERPROFILE")
+    Run "schtasks /Run /TN `"RunPowerShellAsUser`"", , "Hide"
 }
 
 #b::{
@@ -267,18 +265,4 @@ A_MaxHotkeysPerInterval := 350
     hwnd := WinExist("A")  ; アクティブウィンドウ
     if hwnd
         WinMaximize hwnd
-}
-
-; ------------------------------
-; 無変換 → IME OFF
-; ------------------------------
-vk1D::{
-        IME_SET(0)
-}
-
-; ------------------------------
-; 変換 → IME ON
-; ------------------------------
-vk1C::{
-        IME_SET(1)
 }
