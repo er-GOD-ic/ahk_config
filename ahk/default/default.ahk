@@ -23,6 +23,40 @@ if !hvda {
 	ExitApp
 }
 
+activateLastActiveWindow() {
+  oid := WinGetlist(, , "Find",)
+
+  Loop oid.Length
+  {
+    this_ID := oid[A_Index]
+    if WinActive("ahk_id " this_ID) || !isWindow(this_ID)
+      continue
+    WinActivate("ahk_id " . this_ID)
+    DllCall("SetForegroundWindow", "UInt", this_ID)
+    break
+  }
+}
+
+isWindow(hWnd) {
+  dwStyle := WinGetStyle("ahk_id " . hWnd)
+  if ((dwStyle & 0x08000000) || !(dwStyle & 0x10000000))
+    return false
+
+  dwExStyle := WinGetExStyle("ahk_id " . hWnd)
+  if ((dwExStyle & 0x00000080) || (dwExStyle & 0x00040000) || (dwExStyle & 0x00000008))
+    return false
+
+  if isWindowCloaked(hWnd)
+    return false
+
+  return true
+}
+
+isWindowCloaked(hwnd) {
+  cloaked := 0
+  return DllCall("dwmapi\DwmGetWindowAttribute", "ptr", hwnd, "int", 14, "ptr", cloaked, "int", 4) >= 0 && cloaked
+}
+
 ; ============================================
 ; 仮想デスクトップ操作関数
 ; （番号は 0 始まり）
@@ -30,6 +64,7 @@ if !hvda {
 
 GoToDesktop(n) {
     DllCall("VirtualDesktopAccessor.dll\GoToDesktopNumber", "Int", n)
+    activateLastActiveWindow()
 }
 
 MoveWindowToDesktop(n) {
@@ -71,66 +106,34 @@ GetDesktopCount() {
 global tryed_katakana := false
 global tryed_hiragana := false
 
-reset_tryed_vals() {
-    global tryed_hiragana, tryed_katakana
-    if (!IME_GetConverting()) {
-        tryed_hiragana := false
-        tryed_katakana := false
-    }
-}
-
 F13 & h::{
-    reset_tryed_vals()
     Send GetKeyState("Shift","P") ? "+{Left}"  : "{Left}"
 }
 F13 & j::{
     global tryed_hiragana
-    reset_tryed_vals()
-    if (IME_GetConverting() && !tryed_hiragana && !tryed_katakana) {
-        Send "{F6}"
-        tryed_hiragana := true
-    } else {
-        Send GetKeyState("Shift","P") ? "+{Down}"  : "{Down}"
-    }
+    Send GetKeyState("Shift","P") ? "+{Down}"  : "{Down}"
 }
 F13 & k::{
     global tryed_katakana
-    reset_tryed_vals()
-    if (IME_GetConverting() && !tryed_hiragana && !tryed_katakana) {
-        Send "{F7}"
-	tryed_katakana := true
-    } else {
-        Send GetKeyState("Shift","P") ? "+{Up}"    : "{Up}"
-    }
+    Send GetKeyState("Shift","P") ? "+{Up}"    : "{Up}"
 }
 F13 & l::{
-    reset_tryed_vals()
     Send GetKeyState("Shift","P") ? "+{Right}" : "{Right}"
 }
 
 F13 & `;::{
-    reset_tryed_vals()
     Send "{BackSpace}"
 }
 F13 & '::{
-    reset_tryed_vals()
     Send "{Delete}"
 }
 
 F13 & a::{
-    reset_tryed_vals()
     Send GetKeyState("Shift","P") ? "+{Home}" : "{Home}"
 }
 F13 & e::{
-    reset_tryed_vals()
     Send GetKeyState("Shift","P") ? "+{End}" : "{End}"
 }
-
-~Enter::reset_tryed_vals()
-~Delete::reset_tryed_vals()
-~Backspace::reset_tryed_vals()
-~LButton::reset_tryed_vals()
-~RButton::reset_tryed_vals()
 
 ; ============================================
 ; アプリ起動
@@ -138,7 +141,7 @@ F13 & e::{
 
 #Space::{
     ; PowerShell をユーザー HOME で起動
-    Run "powershell", EnvGet("USERPROFILE")
+    Run "schtasks /Run /TN `"RunPowerShellAsUser`"", , "Hide"
 }
 
 #b::{
