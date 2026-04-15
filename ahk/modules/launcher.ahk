@@ -11,7 +11,7 @@
 #b::{
     ; get ProgId 
     progId := RegRead(
-        "HKEY_CURRENT_USER\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice",
+        "HKEY_CURRENT_USER\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoiceLatest\ProgId",
         "ProgId"
     )
 
